@@ -210,23 +210,6 @@ func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusC
 			c.Render(-1, common.CustomEvent{Data: "data: " + string(jsonResponse)})
 			return true
 		case <-stopChan:
-			var choice openai.ChatCompletionsStreamResponseChoice
-			finishReason := "stop"
-			choice.FinishReason = &finishReason
-			response := openai.ChatCompletionsStreamResponse{
-				Id:      fmt.Sprintf("chatcmpl-%s", helper.GetUUID()),
-				Object:  "chat.completion.chunk",
-				Created: helper.GetTimestamp(),
-				Model:   "qwen",
-				Choices: []openai.ChatCompletionsStreamResponseChoice{choice},
-			}
-			jsonResponse, err := json.Marshal(response)
-			if err != nil {
-				logger.SysError("error marshalling stream response: " + err.Error())
-				return true
-			}
-			c.Render(-1, common.CustomEvent{Data: "data: " + string(jsonResponse)})
-
 			c.Render(-1, common.CustomEvent{Data: "data: [DONE]"})
 			return false
 		}
