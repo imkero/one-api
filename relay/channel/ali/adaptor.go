@@ -35,6 +35,7 @@ func (a *Adaptor) SetupRequestHeader(c *gin.Context, req *http.Request, meta *ut
 	req.Header.Set("Authorization", "Bearer "+meta.APIKey)
 	if meta.IsStream {
 		req.Header.Set("X-DashScope-SSE", "enable")
+		req.Header.Set("Accept", "text/event-stream")
 	}
 	if c.GetString(common.ConfigKeyPlugin) != "" {
 		req.Header.Set("X-DashScope-Plugin", c.GetString(common.ConfigKeyPlugin))
