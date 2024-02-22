@@ -232,6 +232,7 @@ func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusC
 			responseText += dummy.Content
 			var choice openai.ChatCompletionsStreamResponseChoice
 			choice.Delta.Content = dummy.Content
+			choice.Delta.Role = "assistant"
 			response := openai.ChatCompletionsStreamResponse{
 				Id:      fmt.Sprintf("chatcmpl-%s", helper.GetUUID()),
 				Object:  "chat.completion.chunk",

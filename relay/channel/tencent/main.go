@@ -88,6 +88,7 @@ func streamResponseTencent2OpenAI(TencentResponse *ChatResponse) *openai.ChatCom
 	if len(TencentResponse.Choices) > 0 {
 		var choice openai.ChatCompletionsStreamResponseChoice
 		choice.Delta.Content = TencentResponse.Choices[0].Delta.Content
+		choice.Delta.Role = "assistant"
 		if TencentResponse.Choices[0].FinishReason == "stop" {
 			choice.FinishReason = &constant.StopFinishReason
 		}

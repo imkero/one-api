@@ -136,6 +136,7 @@ func responseAli2OpenAI(response *ChatResponse) *openai.TextResponse {
 func streamResponseAli2OpenAI(aliResponse *ChatResponse) *openai.ChatCompletionsStreamResponse {
 	var choice openai.ChatCompletionsStreamResponseChoice
 	choice.Delta.Content = aliResponse.Output.Text
+	choice.Delta.Role = "assistant"
 	if aliResponse.Output.FinishReason != "null" {
 		finishReason := aliResponse.Output.FinishReason
 		choice.FinishReason = &finishReason

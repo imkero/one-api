@@ -120,6 +120,7 @@ type ImageResponse struct {
 type ChatCompletionsStreamResponseChoice struct {
 	Delta struct {
 		Content string `json:"content"`
+		Role    string `json:"role,omitempty"`
 	} `json:"delta"`
 	FinishReason *string `json:"finish_reason,omitempty"`
 }
