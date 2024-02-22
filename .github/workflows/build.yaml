@@ -1,0 +1,40 @@
+name: Publish Docker image (amd64)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/one-api:latest
+
+      - name: Delete untagged images
+        uses: Chizkiyahu/delete-untagged-ghcr-action@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository_owner: ${{ github.repository_owner }}
+          repository: ${{ github.repository }}
+          package_name: one-api
+          untagged_only: true
+          owner_type: user
