@@ -191,6 +191,7 @@ func streamResponseGeminiChat2OpenAI(geminiResponse *ChatResponse) *openai.ChatC
 func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusCode, string) {
 	responseText := ""
 	dataChan := make(chan string)
+	startChan := make(chan bool)
 	stopChan := make(chan bool)
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -206,6 +207,7 @@ func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusC
 		return 0, nil, nil
 	})
 	go func() {
+		startChan <- true
 		for scanner.Scan() {
 			data := scanner.Text()
 			data = strings.TrimSpace(data)
@@ -221,6 +223,24 @@ func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusC
 	common.SetEventStreamHeaders(c)
 	c.Stream(func(w io.Writer) bool {
 		select {
+		case <-startChan:
+			var choice openai.ChatCompletionsStreamResponseChoice
+			choice.Delta.Role = "assistant"
+			choice.Delta.Content = ""
+			response := openai.ChatCompletionsStreamResponse{
+				Id:      fmt.Sprintf("chatcmpl-%s", helper.GetUUID()),
+				Object:  "chat.completion.chunk",
+				Created: helper.GetTimestamp(),
+				Model:   "gemini-pro",
+				Choices: []openai.ChatCompletionsStreamResponseChoice{choice},
+			}
+			jsonResponse, err := json.Marshal(response)
+			if err != nil {
+				logger.SysError("error marshalling stream response: " + err.Error())
+				return true
+			}
+			c.Render(-1, common.CustomEvent{Data: "data: " + string(jsonResponse)})
+			return true
 		case data := <-dataChan:
 			// this is used to prevent annoying \ related format bug
 			data = fmt.Sprintf("{\"content\": \"%s\"}", data)
@@ -232,7 +252,6 @@ func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusC
 			responseText += dummy.Content
 			var choice openai.ChatCompletionsStreamResponseChoice
 			choice.Delta.Content = dummy.Content
-			choice.Delta.Role = "assistant"
 			response := openai.ChatCompletionsStreamResponse{
 				Id:      fmt.Sprintf("chatcmpl-%s", helper.GetUUID()),
 				Object:  "chat.completion.chunk",

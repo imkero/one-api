@@ -3,6 +3,7 @@ package ali
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/helper"
@@ -167,8 +168,10 @@ func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusC
 		return 0, nil, nil
 	})
 	dataChan := make(chan string)
+	startChan := make(chan bool)
 	stopChan := make(chan bool)
 	go func() {
+		startChan <- true
 		for scanner.Scan() {
 			data := scanner.Text()
 			if len(data) < 5 { // ignore blank line or wrong format
@@ -186,6 +189,24 @@ func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusC
 	//lastResponseText := ""
 	c.Stream(func(w io.Writer) bool {
 		select {
+		case <-startChan:
+			var choice openai.ChatCompletionsStreamResponseChoice
+			choice.Delta.Role = "assistant"
+			choice.Delta.Content = ""
+			response := openai.ChatCompletionsStreamResponse{
+				Id:      fmt.Sprintf("chatcmpl-%s", helper.GetUUID()),
+				Object:  "chat.completion.chunk",
+				Created: helper.GetTimestamp(),
+				Model:   "qwen",
+				Choices: []openai.ChatCompletionsStreamResponseChoice{choice},
+			}
+			jsonResponse, err := json.Marshal(response)
+			if err != nil {
+				logger.SysError("error marshalling stream response: " + err.Error())
+				return true
+			}
+			c.Render(-1, common.CustomEvent{Data: "data: " + string(jsonResponse)})
+			return true
 		case data := <-dataChan:
 			var aliResponse ChatResponse
 			err := json.Unmarshal([]byte(data), &aliResponse)

@@ -113,8 +113,10 @@ func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusC
 		return 0, nil, nil
 	})
 	dataChan := make(chan string)
+	startChan := make(chan bool)
 	stopChan := make(chan bool)
 	go func() {
+		startChan <- true
 		for scanner.Scan() {
 			data := scanner.Text()
 			if len(data) < 5 { // ignore blank line or wrong format
@@ -131,6 +133,24 @@ func StreamHandler(c *gin.Context, resp *http.Response) (*model.ErrorWithStatusC
 	common.SetEventStreamHeaders(c)
 	c.Stream(func(w io.Writer) bool {
 		select {
+		case <-startChan:
+			var choice openai.ChatCompletionsStreamResponseChoice
+			choice.Delta.Role = "assistant"
+			choice.Delta.Content = ""
+			response := openai.ChatCompletionsStreamResponse{
+				Id:      fmt.Sprintf("chatcmpl-%s", helper.GetUUID()),
+				Object:  "chat.completion.chunk",
+				Created: helper.GetTimestamp(),
+				Model:   "tencent-hunyuan",
+				Choices: []openai.ChatCompletionsStreamResponseChoice{choice},
+			}
+			jsonResponse, err := json.Marshal(response)
+			if err != nil {
+				logger.SysError("error marshalling stream response: " + err.Error())
+				return true
+			}
+			c.Render(-1, common.CustomEvent{Data: "data: " + string(jsonResponse)})
+			return true
 		case data := <-dataChan:
 			var TencentResponse ChatResponse
 			err := json.Unmarshal([]byte(data), &TencentResponse)
