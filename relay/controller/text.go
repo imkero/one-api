@@ -58,7 +58,7 @@ func RelayTextHelper(c *gin.Context) *model.ErrorWithStatusCode {
 		if isModelMapped || meta.ChannelType == common.ChannelTypeOpenRouter {
 			if meta.ChannelType == common.ChannelTypeOpenRouter {
 				textRequest.Provider = &model.OpenRouterProviderConfig{
-					Order: []string{"OpenAI"}
+					Order: []string{"OpenAI"},
 				}
 			}
 			jsonStr, err := json.Marshal(textRequest)
