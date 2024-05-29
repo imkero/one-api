@@ -60,6 +60,11 @@ func (a *Adaptor) ConvertRequest(c *gin.Context, relayMode int, request *model.G
 	if request == nil {
 		return nil, errors.New("request is nil")
 	}
+	if meta.ChannelType == common.ChannelTypeOpenRouter {
+		request.Provider = &model.OpenRouterProviderConfig{
+			Order: []string{"OpenAI"}
+		}
+	}
 	return request, nil
 }
 

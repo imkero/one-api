@@ -4,6 +4,10 @@ type ResponseFormat struct {
 	Type string `json:"type,omitempty"`
 }
 
+type OpenRouterProviderConfig struct {
+	Order  []string `json:"order"`
+}
+
 type GeneralOpenAIRequest struct {
 	Model            string          `json:"model,omitempty"`
 	Messages         []Message       `json:"messages,omitempty"`
@@ -24,6 +28,7 @@ type GeneralOpenAIRequest struct {
 	Tools            any             `json:"tools,omitempty"`
 	ToolChoice       any             `json:"tool_choice,omitempty"`
 	User             string          `json:"user,omitempty"`
+	Provider         OpenRouterProviderConfig `json:"provider,omitempty"`
 }
 
 func (r GeneralOpenAIRequest) ParseInput() []string {
