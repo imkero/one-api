@@ -55,7 +55,12 @@ func RelayTextHelper(c *gin.Context) *model.ErrorWithStatusCode {
 	var requestBody io.Reader
 	if meta.APIType == constant.APITypeOpenAI {
 		// no need to convert request for openai
-		if isModelMapped {
+		if isModelMapped || meta.ChannelType == common.ChannelTypeOpenRouter {
+			if meta.ChannelType == common.ChannelTypeOpenRouter {
+				textRequest.Provider = &model.OpenRouterProviderConfig{
+					Order: []string{"OpenAI"}
+				}
+			}
 			jsonStr, err := json.Marshal(textRequest)
 			if err != nil {
 				return openai.ErrorWrapper(err, "json_marshal_failed", http.StatusInternalServerError)
